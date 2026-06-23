@@ -2279,7 +2279,7 @@ func (p *WriteCache) Put(t *Write) {
 	p.mu.Unlock()
 }
 func (t *Write) Marshal(wire io.Writer) {
-	var b [8]byte
+	var b [16]byte
 	var bs []byte
 	bs = b[:8]
 	tmp32 := t.RequestId
@@ -2293,13 +2293,24 @@ func (t *Write) Marshal(wire io.Writer) {
 	bs[6] = byte(tmp32 >> 16)
 	bs[7] = byte(tmp32 >> 24)
 	wire.Write(bs)
+  bs = b[8:16]
+  tmp64 := uint64(t.OId)
+  bs[0] = byte(tmp64)
+  bs[1] = byte(tmp64 >> 8)
+  bs[2] = byte(tmp64 >> 16)
+  bs[3] = byte(tmp64 >> 24)
+  bs[4] = byte(tmp64 >> 32)
+  bs[5] = byte(tmp64 >> 40)
+  bs[6] = byte(tmp64 >> 48)
+  bs[7] = byte(tmp64 >> 56)
+  wire.Write(bs)
 	t.K.Marshal(wire)
 	t.V.Marshal(wire)
 	t.D.Marshal(wire)
 }
 
 func (t *Write) Unmarshal(wire io.Reader) error {
-	var b [8]byte
+	var b [16]byte
 	var bs []byte
 	bs = b[:8]
 	if _, err := io.ReadAtLeast(wire, bs, 8); err != nil {
@@ -2307,6 +2318,11 @@ func (t *Write) Unmarshal(wire io.Reader) error {
 	}
 	t.RequestId = int32((uint32(bs[0]) | (uint32(bs[1]) << 8) | (uint32(bs[2]) << 16) | (uint32(bs[3]) << 24)))
 	t.ClientId = int32((uint32(bs[4]) | (uint32(bs[5]) << 8) | (uint32(bs[6]) << 16) | (uint32(bs[7]) << 24)))
+  bs = b[8:16]
+  if _, err := io.ReadAtLeast(wire, bs, 8); err != nil {
+    return err
+  }
+  t.OId = int64(uint64(bs[0]) | (uint64(bs[1]) << 8) | (uint64(bs[2]) << 16) | (uint64(bs[3]) << 24) | (uint64(bs[4]) << 32) | (uint64(bs[5]) << 40) | (uint64(bs[6]) << 48) | (uint64(bs[7]) << 56))
 	t.K.Unmarshal(wire)
 	t.V.Unmarshal(wire)
 	t.D.Unmarshal(wire)
@@ -2719,7 +2735,7 @@ func (p *RMWCache) Put(t *RMW) {
 	p.mu.Unlock()
 }
 func (t *RMW) Marshal(wire io.Writer) {
-	var b [8]byte
+	var b [16]byte
 	var bs []byte
 	bs = b[:8]
 	tmp32 := t.RequestId
@@ -2733,6 +2749,17 @@ func (t *RMW) Marshal(wire io.Writer) {
 	bs[6] = byte(tmp32 >> 16)
 	bs[7] = byte(tmp32 >> 24)
 	wire.Write(bs)
+  bs = b[8:16]
+  tmp64 := uint64(t.OId)
+  bs[0] = byte(tmp64)
+  bs[1] = byte(tmp64 >> 8)
+  bs[2] = byte(tmp64 >> 16)
+  bs[3] = byte(tmp64 >> 24)
+  bs[4] = byte(tmp64 >> 32)
+  bs[5] = byte(tmp64 >> 40)
+  bs[6] = byte(tmp64 >> 48)
+  bs[7] = byte(tmp64 >> 56)
+  wire.Write(bs)
 	t.K.Marshal(wire)
 	t.D.Marshal(wire)
 	t.OldValue.Marshal(wire)
@@ -2740,7 +2767,7 @@ func (t *RMW) Marshal(wire io.Writer) {
 }
 
 func (t *RMW) Unmarshal(wire io.Reader) error {
-	var b [8]byte
+	var b [16]byte
 	var bs []byte
 	bs = b[:8]
 	if _, err := io.ReadAtLeast(wire, bs, 8); err != nil {
@@ -2748,6 +2775,11 @@ func (t *RMW) Unmarshal(wire io.Reader) error {
 	}
 	t.RequestId = int32((uint32(bs[0]) | (uint32(bs[1]) << 8) | (uint32(bs[2]) << 16) | (uint32(bs[3]) << 24)))
 	t.ClientId = int32((uint32(bs[4]) | (uint32(bs[5]) << 8) | (uint32(bs[6]) << 16) | (uint32(bs[7]) << 24)))
+  bs = b[8:16]
+  if _, err := io.ReadAtLeast(wire, bs, 8); err != nil {
+    return err
+  }
+  t.OId = int64(uint64(bs[0]) | (uint64(bs[1]) << 8) | (uint64(bs[2]) << 16) | (uint64(bs[3]) << 24) | (uint64(bs[4]) << 32) | (uint64(bs[5]) << 40) | (uint64(bs[6]) << 48) | (uint64(bs[7]) << 56))
 	t.K.Unmarshal(wire)
 	t.D.Unmarshal(wire)
 	t.OldValue.Unmarshal(wire)
@@ -3067,7 +3099,7 @@ func (p *ReadCache) Put(t *Read) {
 	p.mu.Unlock()
 }
 func (t *Read) Marshal(wire io.Writer) {
-	var b [8]byte
+	var b [16]byte
 	var bs []byte
 	bs = b[:8]
 	tmp32 := t.RequestId
@@ -3081,12 +3113,23 @@ func (t *Read) Marshal(wire io.Writer) {
 	bs[6] = byte(tmp32 >> 16)
 	bs[7] = byte(tmp32 >> 24)
 	wire.Write(bs)
+  bs = b[8:16]
+  tmp64 := uint64(t.OId)
+  bs[0] = byte(tmp64)
+  bs[1] = byte(tmp64 >> 8)
+  bs[2] = byte(tmp64 >> 16)
+  bs[3] = byte(tmp64 >> 24)
+  bs[4] = byte(tmp64 >> 32)
+  bs[5] = byte(tmp64 >> 40)
+  bs[6] = byte(tmp64 >> 48)
+  bs[7] = byte(tmp64 >> 56)
+  wire.Write(bs)
 	t.K.Marshal(wire)
 	t.D.Marshal(wire)
 }
 
 func (t *Read) Unmarshal(wire io.Reader) error {
-	var b [8]byte
+	var b [16]byte
 	var bs []byte
 	bs = b[:8]
 	if _, err := io.ReadAtLeast(wire, bs, 8); err != nil {
@@ -3094,6 +3137,11 @@ func (t *Read) Unmarshal(wire io.Reader) error {
 	}
 	t.RequestId = int32((uint32(bs[0]) | (uint32(bs[1]) << 8) | (uint32(bs[2]) << 16) | (uint32(bs[3]) << 24)))
 	t.ClientId = int32((uint32(bs[4]) | (uint32(bs[5]) << 8) | (uint32(bs[6]) << 16) | (uint32(bs[7]) << 24)))
+  bs = b[8:16]
+  if _, err := io.ReadAtLeast(wire, bs, 8); err != nil {
+    return err
+  }
+  t.OId = int64(uint64(bs[0]) | (uint64(bs[1]) << 8) | (uint64(bs[2]) << 16) | (uint64(bs[3]) << 24) | (uint64(bs[4]) << 32) | (uint64(bs[5]) << 40) | (uint64(bs[6]) << 48) | (uint64(bs[7]) << 56))
 	t.K.Unmarshal(wire)
 	t.D.Unmarshal(wire)
 	return nil

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"paxos"
+	"syscall"
 	"runtime"
 	"runtime/pprof"
 	"abd"
@@ -84,7 +85,7 @@ func main() {
 	log.Printf("]\n")
 
 	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
 	if *doGryff {
 		log.Println("Starting Gryff replica...")
@@ -103,7 +104,7 @@ func main() {
 		rep := gryff.NewReplica(replicaId, nodeList, *thrifty, *exec, *dreply,
 				*beacon, *durable, *statsFile, *regular, *proxy, *noConflicts,
 				*epaxosMode, rmwHandlerType, *shortcircuitTime, *fastOverwriteTime,
-				*forceWritePeriod, *broadcastOptimizationEnabled)
+				*forceWritePeriod, *broadcastOptimizationEnabled, *portnum)
 		rpc.Register(rep)
 		go catchKill(rep, interrupt)
 	} else if *doAbd {

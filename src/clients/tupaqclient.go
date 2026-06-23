@@ -298,7 +298,7 @@ func (c *GryffClient) Read(key int64) (bool, int64) {
 }
 
 func (c *GryffClient) sendReadToNearest(requestId int32, key state.Key) {
-  read := &gryffproto.Read{requestId, c.id, state.Key(key), *c.dep}
+  read := &gryffproto.Read{requestId, c.id, state.Key(key), *c.dep, 0}
 
   var leader int32
   if c.forceLeader >= 0 {
@@ -365,7 +365,7 @@ func (c *GryffClient) Write(key int64, value int64) bool {
 func (c *GryffClient) sendWriteToNearest(requestId int32, key state.Key,
     value state.Value) {
   write := &gryffproto.Write{requestId, c.id, state.Key(key),
-      state.Value(value), *c.dep}
+      state.Value(value), *c.dep, 0}
 
   var leader int32
   if c.forceLeader >= 0 {

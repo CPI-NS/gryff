@@ -30,7 +30,7 @@ func main() {
     go func(i int) {
       replicaId, nodeList := serverlib.RegisterWithMaster("", 7087 + 1 + i, fmt.Sprintf(":%d", 7087))
       replicas[replicaId] = gryff.NewReplica(replicaId, nodeList, false, true, false, true, false,
-        fmt.Sprintf("replica-%d.stats", replicaId), false, true, false, false, gryff.EPAXOS, 100, 100, 100, false)
+        fmt.Sprintf("replica-%d.stats", replicaId), false, true, false, false, gryff.EPAXOS, 100, 100, 100, false, 7087+1+i)
       rpcServers[replicaId] = rpc.NewServer()
       rpcServers[replicaId].Register(replicas[replicaId])
       rpcServers[replicaId].HandleHTTP(fmt.Sprintf("replica-%d-rpc", replicaId), fmt.Sprintf("replica-%d-rpc-debug", replicaId))

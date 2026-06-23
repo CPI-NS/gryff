@@ -90,12 +90,13 @@ type Replica struct {
   fastOverwriteTime int
   forceWritePeriod int
   mtx *sync.Mutex
+  pitSeq *PitSequencer
 }
 
 func NewReplica(id int, peerAddrList []string, thrifty bool, exec bool,
     dreply bool, beacon bool, durable bool, statsFile string, regular bool,
     proxy bool, noConflicts bool, epaxosMode bool, rmwHandler RMWHandlerType,
-    shortcircuitTime int, fastOverwriteTime int, forceWritePeriod int, broadcastOptimizationEnabled bool) *Replica {
+    shortcircuitTime int, fastOverwriteTime int, forceWritePeriod int, broadcastOptimizationEnabled bool, port int) *Replica {
   r := &Replica{genericsmr.NewReplica(id, peerAddrList, thrifty, exec, dreply,
       false, statsFile),
     nil,                                                // parti
@@ -142,6 +143,7 @@ func NewReplica(id int, peerAddrList []string, thrifty bool, exec bool,
     fastOverwriteTime,
     forceWritePeriod,
     new(sync.Mutex),
+    nil,                                                 // pitSeq (set below)
   }
   switch rmwHandler {
     case SDP:
@@ -198,6 +200,9 @@ func NewReplica(id int, peerAddrList []string, thrifty bool, exec bool,
         r.write2Chan)
   }
   r.RegisterClientRPC(new(gryffproto.RMW), clientproto.Gryff_RMW, r.rmwChan)
+
+  r.pitSeq = NewPitSequencer()
+  r.pitSeq.Start(port)
 
   go r.run()
 
@@ -299,6 +304,7 @@ func (r *Replica) SendWrite2(wop *gryffcommon.WriteOp, replicas []int32) {
 
 func (r *Replica) CompleteRead(requestId int32, clientId int32,
     success bool, readValue int64) {
+  r.pitSeq.Complete(requestId, clientId)
   var ok uint8
   if success {
     ok = 1
@@ -317,6 +323,7 @@ func (r *Replica) CompleteRead(requestId int32, clientId int32,
 
 func (r *Replica) CompleteWrite(requestId int32, clientId int32,
     success bool) {
+  r.pitSeq.Complete(requestId, clientId)
   var ok uint8
   if success {
     ok = 1
@@ -534,6 +541,13 @@ func (r *Replica) handleRead2Proxied(read2Proxied *gryffproto.Read2Proxied) {
 }
 
 func (r *Replica) handleRead(read *gryffproto.Read) {
+  if read.OId != 0 {
+    r.pitSeq.Submit(uint64(read.OId), read.RequestId, read.ClientId, func() {
+      read.OId = 0
+      r.readChan <- &genericsmr.ClientRPC{Obj: read, Reply: nil}
+    })
+    return
+  }
   r.Printf("Starting Read[%d,%d].\n", read.RequestId, read.ClientId)
   r.coord.StartRead(read.RequestId, read.ClientId, read.K, &read.D)
 }
@@ -593,6 +607,13 @@ func (r *Replica) handleWrite2Proxied(write2Proxied *gryffproto.Write2Proxied) {
 }
 
 func (r *Replica) handleWrite(write *gryffproto.Write) {
+  if write.OId != 0 {
+    r.pitSeq.Submit(uint64(write.OId), write.RequestId, write.ClientId, func() {
+      write.OId = 0
+      r.writeChan <- &genericsmr.ClientRPC{Obj: write, Reply: nil}
+    })
+    return
+  }
   r.coord.StartWrite(write.RequestId, write.ClientId, write.K, write.V, &write.D)
 }
 

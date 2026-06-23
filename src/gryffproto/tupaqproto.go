@@ -74,6 +74,7 @@ type Read struct {
   ClientId int32
   K state.Key
   D Dep
+  OId int64
 }
 
 type ReadReply struct {
@@ -90,6 +91,7 @@ type Write struct {
   K state.Key
   V state.Value
   D Dep
+  OId int64
 }
 
 type WriteReply struct {
@@ -161,6 +163,7 @@ type RMW struct {
   D Dep
   OldValue state.Value
   NewValue state.Value
+  OId int64
 }
 
 type RMWReply struct {
